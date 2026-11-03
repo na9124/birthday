@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>欧宇煌生日快乐</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #ffe0ec 0%, #ffb3d1 50%, #ff6fa3 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: background 0.8s;
+  }
+  /* 蛋糕模式深色背景 */
+  body.cake-mode {
+    background: radial-gradient(ellipse at center, #2a1a4a 0%, #1a102e 50%, #0a0518 100%) !important;
+  }
+
+  /* ---------- 背景Canvas ---------- */
+  #bgCanvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ---------- 模式切换按钮 ---------- */
+  .mode-tabs {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+  }
+  .mode-tabs button {
+    padding: 8px 22px;
+    border: 2px solid rgba(255,255,255,0.8);
+    border-radius: 30px;
+    background: rgba(255,255,255,0.3);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-shadow: 0 1px 3px rgba(255,80,130,0.4);
+  }
+  .mode-tabs button.active {
+    background: rgba(255,255,255,0.85);
+    color: #ff2d6f;
+    box-shadow: 0 4px 15px rgba(255, 50, 100, 0.4);
+  }
+
+  /* ---------- 页面容器 ---------- */
+  .view {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 70px 1rem 2rem;
+    z-index: 10;
+    transition: opacity 0.5s;
+  }
+  .view.hidden { opacity: 0; pointer-events: none; }
+
+  /* ---------- 爱心模式主区域 ---------- */
+  .heart-main { text-align: center; margin-bottom: 1rem; position: relative; }
+
+  /* 主爱心周围小星星装饰 */
+  .stars-wrap {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .deco-star {
+    position: absolute;
+    font-size: 1.4rem;
+    color: #fff;
+    text-shadow: 0 0 8px rgba(255,255,255,0.9), 0 0 16px rgba(255,215,0,0.6);
+    animation: twinkle 2.5s ease-in-out infinite;
+  }
+  .deco-star.s1 { top: 5%;  left: -5%;  font-size: 1.6rem; animation-delay: 0s; }
+  .deco-star.s2 { top: 15%; left: 15%;  font-size: 1.1rem; animation-delay: 0.3s; }
+  .deco-star.s3 { top: 8%;  right: 10%; font-size: 1.3rem; animation-delay: 0.6s; }
+  .deco-star.s4 { top: 30%; right: -5%; font-size: 1.5rem; animation-delay: 0.9s; }
+  .deco-star.s5 { top: 60%; left: 5%;   font-size: 1rem;  animation-delay: 1.2s; }
+  .deco-star.s6 { top: 70%; right: 8%;  font-size: 1.2rem; animation-delay: 1.5s; }
+  .deco-star.s7 { top: 50%; left: -10%; font-size: 1.4rem; animation-delay: 1.8s; }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.3; transform: scale(0.8) rotate(0deg); }
+    50%      { opacity: 1;   transform: scale(1.15) rotate(15deg); }
+  }
+
+  /* 落款小字 */
+  .signature {
+    text-align: center;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.85);
+    text-shadow: 0 1px 4px rgba(255,80,130,0.5);
+    margin-top: 1rem;
+    font-style: italic;
+    letter-spacing: 1px;
+    opacity: 0;
+    animation: fadeInUp 1s 3.5s forwards;
+  }
+
+  .main-heart {
+    width: 160px;
+    height: 160px;
+    margin: 0 auto 1.2rem;
+    animation: heartbeat 1.2s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(255, 50, 100, 0.6));
+  }
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.12); }
+    50% { transform: scale(0.95); }
+    75% { transform: scale(1.08); }
+  }
+
+  .wish-text {
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: #ff2d6f;
+    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 100, 150, 0.4);
+    letter-spacing: 2px;
+    min-height: 3.5rem;
+  }
+  .wish-text span {
+    display: inline-block;
+    opacity: 0;
+    animation: fadeInChar 0.4s forwards;
+  }
+  @keyframes fadeInChar { to { opacity: 1; } }
+
+  /* ---------- 爱心形状弹窗组 ---------- */
+  .blessing-heart {
+    position: relative;
+    width: min(90vw, 640px);
+    height: min(70vh, 480px);
+    margin: 0 auto;
+  }
+  .blessing-pop {
+    position: absolute;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.85);
+    border: 2px solid #ff6fa3;
+    border-radius: 20px;
+    color: #ff2d6f;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(255, 50, 100, 0.25);
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  .blessing-pop::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -6px;
+    transform: translateX(-50%) rotate(45deg);
+    width: 10px; height: 10px;
+    background: rgba(255,255,255,0.85);
+    border-left: 2px solid #ff6fa3;
+    border-top: 2px solid #ff6fa3;
+  }
+  @keyframes popIn {
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+
+  /* ---------- 蛋糕模式 ---------- */
+  .cake-wrap {
+    text-align: center;
+    position: relative;
+    width: min(90vw, 500px);
+  }
+  .cake-svg {
+    width: min(90vw, 500px);
+    height: auto;
+    filter: drop-shadow(0 10px 30px rgba(155, 100, 200, 0.35));
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ========== 光环动画 ========== */
+  .halo-wrap {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px; height: 500px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .halo-svg {
+    width: 100%; height: 100%;
+    overflow: visible;
+  }
+  .halo-ring {
+    fill: none;
+    transform-origin: 250px 260px;
+  }
+  .halo-1 { animation: rotateRing 8s linear infinite; }
+  .halo-2 { animation: rotateRing 12s linear infinite reverse; }
+  .halo-3 { animation: rotateRing 10s linear infinite; opacity: 0.7; }
+  @keyframes rotateRing {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* ========== 蛋糕周围彩色粒子 ========== */
+  .particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .particle {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: particleFloat var(--dur, 4s) ease-in-out var(--delay, 0s) infinite;
+    box-shadow: 0 0 6px currentColor;
+  }
+  @keyframes particleFloat {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0) scale(1); opacity: 0.9; }
+    50%      { transform: translate(-50%, -50%) translateY(-15px) scale(1.2); opacity: 1; }
+  }
+
+  /* ========== 蛋糕模式文字 ========== */
+  .cake-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 1.5rem;
+    text-shadow: 0 2px 10px rgba(255,100,200,0.6), 0 0 20px rgba(200,100,255,0.4);
+    position: relative;
+    z-index: 5;
+  }
+  .cake-hint {
+    font-size: 1rem;
+    color: #ffc2e0;
+    margin-top: 0.5rem;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    opacity: 0;
+    animation: fadeInUp 1s 0.5s forwards;
+    position: relative;
+    z-index: 5;
+  }
+
+  /* 火焰光晕呼吸 */
+  .flame-glow {
+    opacity: 0.7;
+    animation: glowPulse 1.2s ease-in-out infinite alternate;
+  }
+  .flame-glow2 {
+    opacity: 0.5;
+    animation: glowPulse 1.2s ease-in-out infinite alternate 0.1s;
+  }
+  @keyframes glowPulse {
+    from { opacity: 0.5; transform: scale(1); }
+    to   { opacity: 0.9; transform: scale(1.1); }
+  }
+
+  /* 熄灭后火焰消失 + 烟上升 */
+  .flame.puff {
+    animation: puffOut 0.5s forwards;
+  }
+  @keyframes puffOut {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-30px) scale(0.2); }
+  }
+  .flame-glow.puff, .flame-glow2.puff { opacity: 0; transition: opacity 0.3s; }
+  .smoke {
+    opacity: 0;
+    fill: rgba(200,200,220,0.6);
+  }
+  .smoke.show {
+    animation: smokeRise 1.5s forwards;
+  }
+  @keyframes smokeRise {
+    0%   { opacity: 0; transform: translateY(0) scale(0.3); }
+    30%  { opacity: 0.8; }
+    100% { opacity: 0; transform: translateY(-60px) scale(2); }
+  }
+
+  .wish-fulfill {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 1.5rem;
+    opacity: 0;
+    text-shadow: 0 0 15px rgba(255,215,0,0.6);
+    position: relative;
+    z-index: 5;
+  }
+  .wish-fulfill.show {
+    animation: fadeInUp 1s forwards;
+  }
+
+  /* ========== 全屏祝福覆盖层 ========== */
+  .bless-overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(30,10,50,0.95) 0%, rgba(10,5,24,0.98) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s;
+    overflow: hidden;
+  }
+  .bless-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* 用纯CSS生成环绕旋转的小星星（代替SVG） */
+  .bless-overlay .orbit-stars { display: none; }
+
+  .bless-stars {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .star-on-orbit {
+    position: absolute;
+    left: 50%; top: 50%;
+    font-size: 1.3rem;
+    color: #fff;
+    text-shadow: 0 0 8px #ffd700, 0 0 16px #ff6fa3;
+  }
+  .bless-overlay:not(.show) .star-on-orbit { opacity: 0; }
+  .bless-overlay.show .star-on-orbit {
+    opacity: 1;
+  }
+  /* 外圈星星 */
+  .orbit-layer.layer-1 .star-on-orbit { animation: orbit 12s linear infinite, twinkleOrbit 2s ease-in-out infinite; }
+  .orbit-layer.layer-2 .star-on-orbit { animation: orbit 9s linear infinite reverse, twinkleOrbit 2s ease-in-out infinite 0.5s; }
+  .orbit-layer.layer-3 .star-on-orbit { animation: orbit 7s linear infinite, twinkleOrbit 2s ease-in-out infinite 1s; }
+
+  @keyframes orbit {
+    from { transform: rotate(0deg) translateX(var(--radius)) rotate(0deg); }
+    to   { transform: rotate(360deg) translateX(var(--radius)) rotate(-360deg); }
+  }
+  @keyframes twinkleOrbit {
+    0%, 100% { opacity: 0.4; transform: rotate(var(--tw, 0deg)) scale(0.8); }
+    50%      { opacity: 1;   transform: rotate(var(--tw, 0deg)) scale(1.2); }
+  }
+
+  /* 祝福文字 */
+  .bless-text {
+    text-align: center;
+    position: relative;
+    z-index: 10;
+  }
+  .bless-line {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  .bless-overlay.show .bless-line {
+    animation: blessIn 1s forwards;
+  }
+  .bless-overlay.show .bless-line:nth-child(1) { animation-delay: 0.3s; }
+  .bless-overlay.show .bless-line:nth-child(2) { animation-delay: 0.8s; }
+  .bless-overlay.show .bless-line:nth-child(3) { animation-delay: 1.4s; }
+
+  @keyframes blessIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .bless-main {
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-weight: 900;
+    background: linear-gradient(90deg, #ffd700, #ff6fa3, #ffd700);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 3s linear infinite;
+    text-shadow: 0 0 20px rgba(255,215,0,0.5);
+    margin-bottom: 0.5rem;
+    letter-spacing: 4px;
+  }
+  @keyframes shine {
+    from { background-position: 0% center; }
+    to   { background-position: 200% center; }
+  }
+
+  .bless-sub {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 700;
+    color: #ffc2e0;
+    text-shadow: 0 0 15px rgba(255,100,180,0.7);
+    margin-bottom: 1rem;
+    letter-spacing: 2px;
+  }
+
+  .bless-name {
+    font-size: clamp(0.9rem, 2vw, 1.2rem);
+    color: rgba(255,255,255,0.85);
+    font-style: italic;
+    letter-spacing: 1px;
+  }
+
+  .bless-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 8px 22px;
+    background: rgba(255,255,255,0.12);
+    border: 2px solid rgba(255,215,0,0.5);
+    border-radius: 30px;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 10;
+    opacity: 0;
+    transition: all 0.3s;
+    backdrop-filter: blur(6px);
+  }
+  .bless-overlay.show .bless-close {
+    animation: fadeInUp 1s 0.5s forwards;
+  }
+  .bless-close:hover {
+    background: rgba(255,215,0,0.25);
+    border-color: #ffd700;
+    transform: scale(1.05);
+  }
+
+  /* 覆盖层显示时隐藏发射爱心按钮 */
+  .bless-overlay.show ~ .fire-btn {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* 点击屏幕发射爱心按钮 */
+  .fire-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 24px;
+    background: rgba(255,255,255,0.3);
+    backdrop-filter: blur(8px);
+    border: 2px solid rgba(255,255,255,0.6);
+    border-radius: 30px;
+    color: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    z-index: 100;
+    text-shadow: 0 1px 3px rgba(255,80,130,0.4);
+    transition: all 0.3s;
+  }
+  .fire-btn:hover { background: rgba(255,255,255,0.5); }
+
+  /* 移动端 */
+  @media (max-width: 600px) {
+    .main-heart { width: 110px; height: 110px; }
+    .wish-text { font-size: 2rem; }
+    .cake-title { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<!-- 模式切换 -->
+<div class="mode-tabs">
+  <button id="tabHeart" class="active">💗 爱心模式</button>
+  <button id="tabCake">🎂 蛋糕模式</button>
+</div>
+
+<!-- ========== 爱心模式 ========== -->
+<div class="view" id="viewHeart">
+  <div class="heart-main">
+    <!-- 主爱心周围的小星星装饰 -->
+    <div class="stars-wrap">
+      <span class="deco-star s1">✦</span>
+      <span class="deco-star s2">✧</span>
+      <span class="deco-star s3">✦</span>
+      <span class="deco-star s4">✧</span>
+      <span class="deco-star s5">✦</span>
+      <span class="deco-star s6">✧</span>
+      <span class="deco-star s7">✦</span>
+    </div>
+    <svg class="main-heart" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ff9ec4"/>
+          <stop offset="50%" stop-color="#ff4d8d"/>
+          <stop offset="100%" stop-color="#d62864"/>
+        </linearGradient>
+        <radialGradient id="heartShine" cx="30%" cy="25%" r="50%">
+          <stop offset="0%" stop-color="#fff" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <path d="M50 85 C 15 60, 0 35, 20 15 C 35 0, 50 20, 50 20 C 50 20, 65 0, 80 15 C 100 35, 85 60, 50 85 Z"
+            fill="url(#heartGrad)" stroke="#fff" stroke-width="1.5"/>
+      <path d="M50 85 C 15 60, 0 35, 20 15 C 35 0, 50 20, 50 20 C 50 20, 65 0, 80 15 C 100 35, 85 60, 50 85 Z"
+            fill="url(#heartShine)"/>
+    </svg>
+    <div class="wish-text" id="wishText"></div>
+  </div>
+  <!-- 爱心形状弹窗容器 -->
+  <div class="blessing-heart" id="blessingHeart"></div>
+  <!-- 落款小字 -->
+  <div class="signature">—— 来自朱梦娜的祝福 💌</div>
+</div>
+
+<!-- ========== 蛋糕模式 ========== -->
+<div class="view hidden" id="viewCake">
+  <div class="cake-wrap">
+    <!-- 光环动画：围绕蛋糕旋转的金色螺旋 -->
+    <div class="halo-wrap">
+      <svg class="halo-svg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="haloGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffd700" stop-opacity="0"/>
+            <stop offset="50%" stop-color="#ffe680" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#ffd700" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="haloGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#ff9ec4" stop-opacity="0"/>
+            <stop offset="50%" stop-color="#ffb3d1" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#ff6fa3" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <!-- 外层光环（金色） -->
+        <ellipse cx="250" cy="260" rx="200" ry="70" fill="none" stroke="url(#haloGrad)" stroke-width="4" class="halo-ring halo-1"/>
+        <ellipse cx="250" cy="260" rx="220" ry="80" fill="none" stroke="#ffd700" stroke-width="1.5" stroke-dasharray="8 16" class="halo-ring halo-2"/>
+        <!-- 内层光环（粉色） -->
+        <ellipse cx="250" cy="260" rx="160" ry="55" fill="none" stroke="url(#haloGrad2)" stroke-width="3" class="halo-ring halo-3"/>
+      </svg>
+    </div>
+
+    <!-- 蛋糕SVG -->
+    <svg class="cake-svg" viewBox="0 0 500 480" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- 星空蛋糕渐变 -->
+        <linearGradient id="galaxyCake1" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%"  stop-color="#5b3fb5"/>
+          <stop offset="50%" stop-color="#3d2a8a"/>
+          <stop offset="100%" stop-color="#1e1450"/>
+        </linearGradient>
+        <linearGradient id="galaxyCake2" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%"  stop-color="#4a3599"/>
+          <stop offset="100%" stop-color="#2b1e6e"/>
+        </linearGradient>
+        <!-- 奶油 -->
+        <linearGradient id="pearlCream" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="100%" stop-color="#e8d8f0"/>
+        </linearGradient>
+        <!-- 蜡烛白色 -->
+        <linearGradient id="candleWhite" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="100%" stop-color="#d0c8e0"/>
+        </linearGradient>
+        <!-- 火焰发光光晕 -->
+        <radialGradient id="flameGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"  stop-color="#ffaa00" stop-opacity="0.9"/>
+          <stop offset="40%" stop-color="#ff6600" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="#ff3300" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- ======= 盘子（深色半透明） ======= -->
+      <ellipse cx="250" cy="445" rx="180" ry="18" fill="rgba(255,255,255,0.08)"/>
+      <ellipse cx="250" cy="442" rx="170" ry="12" fill="rgba(255,255,255,0.12)"/>
+      <!-- 盘子边缘星光 -->
+      <circle cx="100" cy="440" r="2" fill="#fff" opacity="0.8"/>
+      <circle cx="400" cy="440" r="2" fill="#fff" opacity="0.8"/>
+
+      <!-- ======= 蛋糕底层（星空蓝紫） ======= -->
+      <rect x="70" y="330" width="360" height="105" rx="12" fill="url(#galaxyCake1)"/>
+      <!-- 星空点缀：蛋糕上的小星 -->
+      <circle cx="100" cy="350" r="1.2" fill="#fff"/>
+      <circle cx="130" cy="380" r="1.5" fill="#a0d8ff"/>
+      <circle cx="170" cy="365" r="1" fill="#fff"/>
+      <circle cx="220" cy="395" r="1.5" fill="#ffd700"/>
+      <circle cx="260" cy="355" r="1" fill="#fff"/>
+      <circle cx="300" cy="375" r="1.3" fill="#a0d8ff"/>
+      <circle cx="340" cy="390" r="1.5" fill="#fff"/>
+      <circle cx="380" cy="360" r="1.2" fill="#ffd700"/>
+      <!-- 底层侧面光 -->
+      <rect x="75" y="335" width="4" height="95" rx="2" fill="rgba(255,255,255,0.15)"/>
+
+      <!-- 底层奶油珍珠圈 -->
+      <g>
+        <circle cx="80"  cy="330" r="6"  fill="url(#pearlCream)" stroke="#fff" stroke-width="0.5"/>
+        <circle cx="100" cy="326" r="7"  fill="url(#pearlCream)" stroke="#fff" stroke-width="0.5"/>
+        <circle cx="122" cy="322" r="7.5" fill="url(#pearlCream)" stroke="#fff" stroke-width="0.5"/>
+        <circle cx="146" cy="320" r="8"  fill="url(#pearlCream)" stroke="#fff" stroke-width="0.5"/>
+        <circle cx="172" cy="319" r="8"  fill="url(#pearlCream)" stroke="#fff" stroke-width="0.5"/>
+        <circle cx="200" cy="320" r="8"  fill="url(#pearlCream)" stroke="#fff" stroke-width="0.5"/>
+        <circle cx="228" cy="319" r="8"  fill="url(#pearlCream)" stroke="#fff" stroke-width="0.5"/>
+        <circle cx="256" cy="320" r="8"  fill="url(#pearlCream)" stroke="#fff" stroke-width="0.5"/>
+        <circle cx="282" cy="319" r="8"  fill="url(#pearlCream)" stroke="#fff" stroke-width="0.5"/>
+        <circle cx="308" cy="320" r="8"  fill="url(#pearlCream)" stroke="#fff" stroke-width="0.5"/>
+        <circle cx="334" cy="322" r="7.5" fill="url(#pearlCream)" stroke="#fff" stroke-width="0.5"/>
+        <circle cx="358" cy="326" r="7"  fill="url(#pearlCream)" stroke="#fff" stroke-width="0.5"/>
+        <circle cx="380" cy="330" r="6"  fill="url(#pearlCream)" stroke="#fff" stroke-width="0.5"/>
+      </g>
+      <!-- 珍珠高光点 -->
+      <g fill="#fff" opacity="0.8">
+        <circle cx="100" cy="324" r="2"/>
+        <circle cx="146" cy="318" r="2"/>
+        <circle cx="200" cy="318" r="2"/>
+        <circle cx="256" cy="318" r="2"/>
+        <circle cx="308" cy="318" r="2"/>
+        <circle cx="358" cy="324" r="2"/>
+      </g>
+
+      <!-- 底层底部奶油波浪 -->
+      <path d="M70 430 Q100 420 130 430 Q160 420 190 430 Q220 420 250 430 Q280 420 310 430 Q340 420 370 430 Q400 420 430 430 L430 438 L70 438 Z" fill="url(#pearlCream)" opacity="0.9"/>
+
+      <!-- ======= 蛋糕中层 ======= -->
+      <rect x="120" y="235" width="260" height="98" rx="10" fill="url(#galaxyCake2)"/>
+      <!-- 中层星光 -->
+      <circle cx="150" cy="260" r="1.2" fill="#fff"/>
+      <circle cx="180" cy="280" r="1" fill="#ffd700"/>
+      <circle cx="220" cy="250" r="1.3" fill="#a0d8ff"/>
+      <circle cx="260" cy="285" r="1" fill="#fff"/>
+      <circle cx="300" cy="260" r="1.5" fill="#fff"/>
+      <circle cx="340" cy="275" r="1.2" fill="#ffd700"/>
+      <rect x="124" y="240" width="3" height="90" rx="1.5" fill="rgba(255,255,255,0.15)"/>
+
+      <!-- 中层奶油珍珠圈 -->
+      <g>
+        <circle cx="130" cy="235" r="5.5" fill="url(#pearlCream)"/>
+        <circle cx="152" cy="230" r="6.5" fill="url(#pearlCream)"/>
+        <circle cx="178" cy="227" r="7" fill="url(#pearlCream)"/>
+        <circle cx="205" cy="226" r="7" fill="url(#pearlCream)"/>
+        <circle cx="235" cy="226" r="7" fill="url(#pearlCream)"/>
+        <circle cx="265" cy="226" r="7" fill="url(#pearlCream)"/>
+        <circle cx="292" cy="227" r="7" fill="url(#pearlCream)"/>
+        <circle cx="318" cy="230" r="6.5" fill="url(#pearlCream)"/>
+        <circle cx="340" cy="235" r="5.5" fill="url(#pearlCream)"/>
+      </g>
+      <g fill="#fff" opacity="0.7">
+        <circle cx="152" cy="228" r="1.5"/>
+        <circle cx="205" cy="224" r="1.5"/>
+        <circle cx="265" cy="224" r="1.5"/>
+        <circle cx="318" cy="228" r="1.5"/>
+      </g>
+
+      <!-- 中层底部奶油波浪 -->
+      <path d="M120 326 Q150 318 180 326 Q210 318 240 326 Q270 318 300 326 Q330 318 360 326 Q380 318 380 326 L380 332 L120 332 Z" fill="url(#pearlCream)" opacity="0.9"/>
+
+      <!-- ======= 蛋糕顶层 ======= -->
+      <rect x="165" y="155" width="170" height="82" rx="10" fill="url(#galaxyCake1)"/>
+      <!-- 顶层星光 -->
+      <circle cx="190" cy="180" r="1" fill="#fff"/>
+      <circle cx="220" cy="200" r="1.3" fill="#a0d8ff"/>
+      <circle cx="250" cy="175" r="1" fill="#ffd700"/>
+      <circle cx="280" cy="195" r="1.2" fill="#fff"/>
+      <circle cx="310" cy="185" r="1" fill="#fff"/>
+      <rect x="168" y="158" width="3" height="76" rx="1.5" fill="rgba(255,255,255,0.15)"/>
+
+      <!-- 顶层奶油珍珠圈 -->
+      <g>
+        <circle cx="172" cy="155" r="5" fill="url(#pearlCream)"/>
+        <circle cx="192" cy="150" r="6" fill="url(#pearlCream)"/>
+        <circle cx="218" cy="147" r="6.5" fill="url(#pearlCream)"/>
+        <circle cx="245" cy="146" r="6.5" fill="url(#pearlCream)"/>
+        <circle cx="272" cy="147" r="6.5" fill="url(#pearlCream)"/>
+        <circle cx="298" cy="150" r="6" fill="url(#pearlCream)"/>
+        <circle cx="320" cy="155" r="5" fill="url(#pearlCream)"/>
+      </g>
+      <g fill="#fff" opacity="0.7">
+        <circle cx="218" cy="145" r="1.5"/>
+        <circle cx="245" cy="144" r="1.5"/>
+        <circle cx="272" cy="145" r="1.5"/>
+      </g>
+
+      <!-- 顶层底部奶油波浪 -->
+      <path d="M165 233 Q190 226 215 233 Q240 226 265 233 Q290 226 315 233 Q335 226 335 233 L335 237 L165 237 Z" fill="url(#pearlCream)" opacity="0.9"/>
+
+      <!-- ======= 中心大蜡烛（白色，更粗更高） ======= -->
+      <g class="candle" data-idx="1">
+        <!-- 蜡烛光晕（底层） -->
+        <circle cx="250" cy="110" r="30" fill="url(#flameGlow)" class="flame-glow"/>
+        <circle cx="250" cy="100" r="20" fill="url(#flameGlow)" class="flame-glow2"/>
+
+        <!-- 蜡烛主体（白色） -->
+        <rect x="240" y="70" width="20" height="80" fill="url(#candleWhite)" rx="3"/>
+        <!-- 蜡烛条纹（淡淡粉色） -->
+        <rect x="240" y="80"  width="20" height="2" fill="#ffd1e3"/>
+        <rect x="240" y="92"  width="20" height="2" fill="#ffd1e3"/>
+        <rect x="240" y="104" width="20" height="2" fill="#ffd1e3"/>
+        <rect x="240" y="116" width="20" height="2" fill="#ffd1e3"/>
+        <rect x="240" y="128" width="20" height="2" fill="#ffd1e3"/>
+        <!-- 蜡烛底部 -->
+        <rect x="240" y="145" width="20" height="6" fill="#c0b8d0" rx="3"/>
+
+        <!-- 烛芯 -->
+        <line x1="250" y1="66" x2="250" y2="72" stroke="#222" stroke-width="1.5"/>
+
+        <!-- 火焰 -->
+        <g class="flame" style="transform-box: fill-box; transform-origin: center bottom;">
+          <!-- 外层大光晕火焰 -->
+          <ellipse cx="250" cy="40" rx="10" ry="20" fill="#ff6600" opacity="0.7"/>
+          <!-- 中层 -->
+          <ellipse cx="250" cy="42" rx="7" ry="16" fill="#ffaa00"/>
+          <!-- 内层亮黄 -->
+          <ellipse cx="250" cy="44" rx="4" ry="11" fill="#ffd700"/>
+          <!-- 最亮白色核心 -->
+          <ellipse cx="250" cy="46" rx="2" ry="6" fill="#fff"/>
+        </g>
+
+        <!-- 熄灭后的烟 -->
+        <g class="smoke" style="transform-box: fill-box; transform-origin: center bottom;">
+          <circle cx="250" cy="30" r="5"/>
+          <circle cx="248" cy="20" r="4" opacity="0.5"/>
+        </g>
+      </g>
+    </svg>
+
+    <!-- 蛋糕周围彩色粒子（漂浮的糖珠特效） -->
+    <div class="particles" id="particles"></div>
+
+    <div class="cake-title" id="cakeTitle">欧宇煌，许个愿吧 ✨</div>
+    <div class="cake-hint" id="cakeHint">💨 点击蜡烛吹灭它，蛋糕上的愿望会成真</div>
+    <div class="wish-fulfill" id="wishFulfill"></div>
+  </div>
+
+  <!-- ========== 全屏祝福覆盖层（蜡烛吹灭后出现） ========== -->
+  <div class="bless-overlay" id="blessOverlay">
+    <!-- 环绕旋转的小星星（三层orbit） -->
+    <div class="bless-stars" id="blessStars">
+      <div class="orbit-layer layer-1"></div>
+      <div class="orbit-layer layer-2"></div>
+      <div class="orbit-layer layer-3"></div>
+    </div>
+
+    <div class="bless-text">
+      <div class="bless-line bless-main">生日快乐！</div>
+      <div class="bless-line bless-sub">天天开心 ✨</div>
+      <div class="bless-line bless-name">—— 送给欧宇煌 💌</div>
+    </div>
+
+    <button class="bless-close" id="blessClose">✕ 返回蛋糕</button>
+  </div>
+</div>
+
+<div class="fire-btn">✨ 点击屏幕发射爱心 ✨</div>
+
+<script>
+// ============================================================
+// ★ 配置区：改名字 / 祝福语都在这里
+// ============================================================
+const BIRTHDAY_NAME = '欧宇煌';
+const BLESSINGS = [
+  '生日快乐！',
+  '永远开心 ✨',
+  '身体健康 💪',
+  '心想事成 🎯',
+  '万事胜意 🌟',
+  '前程似锦 🚀',
+  '天天好运 🍀',
+  '幸福美满 💗',
+  '学业进步 📚',
+  '财源广进 💰',
+  '友谊长存 🤝',
+  '魅力四射 💫',
+  '笑口常开 😆',
+  '平安喜乐 🌈',
+  '美梦成真 🌙',
+  '一路生花 🌸',
+  '未来可期 ⭐',
+  '生日快乐！🎂'
+];
+const WISH_AFTER_BLOW = ['愿望已送达 🎁', '永远幸福 💕', '生日快乐！！'];
+// ============================================================
+
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ---------- 爱心绘制（参数方程）----------
+function drawHeart(ctx, x, y, size, color, alpha = 1) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  for (let t = 0; t < Math.PI * 2; t += 0.05) {
+    const px = 16 * Math.pow(Math.sin(t), 3);
+    const py = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    const sx = x + px * size;
+    const sy = y - py * size;
+    if (t === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+// ---------- 背景粒子 ----------
+class FloatingHeart {
+  constructor() { this.reset(); this.y = Math.random() * canvas.height; }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = canvas.height + 20;
+    this.size = Math.random() * 1.2 + 0.4;
+    this.speed = Math.random() * 1.5 + 0.5;
+    this.wobble = Math.random() * Math.PI * 2;
+    this.wobbleSpeed = Math.random() * 0.02 + 0.01;
+    this.alpha = Math.random() * 0.4 + 0.2;
+    const colors = ['#ff6fa3', '#ff9ec4', '#ff4d8d', '#ffb3d1', '#ffffff'];
+    this.color = colors[Math.floor(Math.random() * colors.length)];
+  }
+  update() {
+    this.y -= this.speed;
+    this.wobble += this.wobbleSpeed;
+    this.x += Math.sin(this.wobble) * 0.8;
+    if (this.y < -20) this.reset();
+  }
+  draw() { drawHeart(ctx, this.x, this.y, this.size, this.color, this.alpha); }
+}
+
+class Star {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.size = Math.random() * 2 + 0.5;
+    this.phase = Math.random() * Math.PI * 2;
+  }
+  update() {
+    this.phase += Math.random() * 0.03 + 0.01;
+    this.alpha = 0.3 + Math.abs(Math.sin(this.phase)) * 0.6;
+  }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+class PopHeart {
+  constructor(x, y) {
+    this.x = x; this.y = y;
+    this.size = Math.random() * 1.5 + 0.8;
+    this.vx = (Math.random() - 0.5) * 4;
+    this.vy = Math.random() * -3 - 2;
+    this.life = 1;
+    this.decay = Math.random() * 0.01 + 0.008;
+    const colors = ['#ff4d8d', '#ff6fa3', '#fff'];
+    this.color = colors[Math.floor(Math.random() * colors.length)];
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    this.vy += 0.08;
+    this.life -= this.decay;
+  }
+  draw() { if (this.life > 0) drawHeart(ctx, this.x, this.y, this.size, this.color, this.life); }
+}
+
+const bgHearts = Array.from({ length: 30 }, () => new FloatingHeart());
+const stars = Array.from({ length: 80 }, () => new Star());
+const popHearts = [];
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => { s.update(); s.draw(); });
+  bgHearts.forEach(h => { h.update(); h.draw(); });
+  for (let i = popHearts.length - 1; i >= 0; i--) {
+    popHearts[i].update(); popHearts[i].draw();
+    if (popHearts[i].life <= 0) popHearts.splice(i, 1);
+  }
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ---------- 点击发射爱心 ----------
+document.addEventListener('click', (e) => {
+  // 覆盖层显示时、或点到按钮/标签时，不发射爱心
+  if (document.getElementById('blessOverlay').classList.contains('show')) return;
+  if (e.target.closest('button, .mode-tabs, .fire-btn')) return;
+  for (let i = 0; i < 10; i++) popHearts.push(new PopHeart(e.clientX, e.clientY));
+});
+
+// ============================================================
+// 爱心模式：打字机 + 爱心形状弹窗
+// ============================================================
+const wishText = document.getElementById('wishText');
+const message = BIRTHDAY_NAME + '生日快乐！';
+let charIndex = 0;
+
+function typeChar() {
+  if (charIndex >= message.length) return;
+  const span = document.createElement('span');
+  span.textContent = message[charIndex];
+  span.style.animationDelay = (charIndex * 0.08) + 's';
+  wishText.appendChild(span);
+  charIndex++;
+  setTimeout(typeChar, 150);
+}
+setTimeout(typeChar, 800);
+
+// ---------- 爱心形状弹窗 ----------
+// 用爱心参数方程生成坐标，坐标数量 = 祝福语数量
+function generateHeartCoords(count) {
+  const points = [];
+  // 外轮廓：用心形参数方程在 perimeter 上采样
+  // 心形参数：x = 16sin³t, y = 13cost - 5cos2t - 2cos3t - cos4t
+  for (let i = 0; i < count; i++) {
+    const t = (i / count) * Math.PI * 2;
+    const x = 16 * Math.pow(Math.sin(t), 3);
+    const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+    points.push({ x, y });
+  }
+  return points;
+}
+
+function layoutBlessings() {
+  const container = document.getElementById('blessingHeart');
+  const rect = container.getBoundingClientRect();
+  const W = rect.width, H = rect.height;
+  // 容器内可用的爱心区域（留出主爱心和文字的空间）
+  const cx = W / 2;
+  const cy = H / 2;
+  // 缩放：让心形大致填满容器，且左右各留边距
+  const maxR = Math.min(W, H) / 2 - 30;
+
+  // 清理旧弹窗
+  container.innerHTML = '';
+
+  // 根据祝福语数量生成心形坐标
+  const coords = generateHeartCoords(BLESSINGS.length);
+
+  // 根据弹窗的预估宽度（约100px），动态缩放心形大小
+  // 让最宽方向刚好容纳所有点
+  let scale = maxR / 18; // 初始值（心形最宽处约 ±16）
+  // 估算缩放：根据坐标分布调整
+  let maxCoord = 0;
+  coords.forEach(p => {
+    maxCoord = Math.max(maxCoord, Math.abs(p.x), Math.abs(p.y));
+  });
+  scale = maxR / maxCoord * 0.95;
+
+  coords.forEach((p, i) => {
+    const pop = document.createElement('div');
+    pop.className = 'blessing-pop';
+    pop.textContent = BLESSINGS[i % BLESSINGS.length];
+    pop.style.left = (cx + p.x * scale) + 'px';
+    pop.style.top  = (cy + p.y * scale) + 'px';
+    pop.style.animationDelay = (0.8 + i * 0.08) + 's';
+    container.appendChild(pop);
+  });
+}
+
+// 等待布局后执行（让容器先有尺寸）
+setTimeout(layoutBlessings, 200);
+window.addEventListener('resize', () => {
+  // 避免过度触发
+  clearTimeout(window._blessDebounce);
+  window._blessDebounce = setTimeout(layoutBlessings, 150);
+});
+
+// ============================================================
+// 蛋糕模式：粒子 + 光环 + 蜡烛 + 吹蜡烛
+// ============================================================
+
+// ---------- 蛋糕周围彩色粒子 ----------
+function spawnCakeParticles() {
+  const container = document.getElementById('particles');
+  if (!container) return;
+  container.innerHTML = '';
+  const colors = ['#ffd700', '#ff6fa3', '#a0d8ff', '#ff9ec4', '#fff', '#9b64c8', '#ff4d8d'];
+  const count = 50;
+  const rect = container.getBoundingClientRect();
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.color = colors[Math.floor(Math.random() * colors.length)];
+    p.style.background = p.style.color;
+    p.style.left = Math.random() * 100 + '%';
+    p.style.top  = Math.random() * 100 + '%';
+    p.style.width = p.style.height = (Math.random() * 6 + 3) + 'px';
+    p.style.setProperty('--dur', (Math.random() * 3 + 3) + 's');
+    p.style.setProperty('--delay', (Math.random() * 4) + 's');
+    container.appendChild(p);
+  }
+}
+
+// ---------- 蜡烛交互 ----------
+const candles = document.querySelectorAll('.candle');
+const cakeTitle = document.getElementById('cakeTitle');
+const cakeHint  = document.getElementById('cakeHint');
+const wishFulfill = document.getElementById('wishFulfill');
+let blownCount = 0;
+const totalCandles = candles.length;
+
+function blowCandle(candleEl) {
+  const flame = candleEl.querySelector('.flame');
+  const smoke = candleEl.querySelector('.smoke');
+  const glows = candleEl.querySelectorAll('.flame-glow, .flame-glow2');
+  if (!flame.classList.contains('puff')) {
+    flame.classList.add('puff');
+    smoke.classList.add('show');
+    glows.forEach(g => g.classList.add('puff'));
+    blownCount++;
+    if (blownCount >= totalCandles) {
+      setTimeout(() => {
+        cakeTitle.textContent = '🎂 愿望已送达！';
+        cakeHint.style.display = 'none';
+        showBlessOverlay();
+      }, 600);
+    }
+  }
+}
+
+// ---------- 全屏祝福覆盖层 ----------
+function showBlessOverlay() {
+  const overlay = document.getElementById('blessOverlay');
+  overlay.classList.add('show');
+  spawnOrbitStars();
+}
+
+function hideBlessOverlay() {
+  const overlay = document.getElementById('blessOverlay');
+  overlay.classList.remove('show');
+}
+
+// 生成环绕旋转的小星星（按角度均匀分布在三层轨道上）
+function spawnOrbitStars() {
+  const layers = document.querySelectorAll('.orbit-layer');
+  // 三层：外圈(16颗)、中圈(12颗)、内圈(8颗)
+  const configs = [
+    { count: 16, radius: 'min(40vw, 380px)', size: '1.2rem' },
+    { count: 12, radius: 'min(30vw, 280px)', size: '1rem' },
+    { count: 10, radius: 'min(18vw, 180px)', size: '0.9rem' },
+  ];
+  layers.forEach((layer, idx) => {
+    const cfg = configs[idx];
+    layer.innerHTML = '';
+    const chars = ['✦', '✧', '✦', '✧'];
+    for (let i = 0; i < cfg.count; i++) {
+      const star = document.createElement('div');
+      star.className = 'star-on-orbit';
+      star.textContent = chars[i % 2];
+      const angle = (360 / cfg.count) * i;
+      star.style.setProperty('--radius', cfg.radius);
+      star.style.setProperty('--tw', angle + 'deg');
+      star.style.fontSize = cfg.size;
+      star.style.animationDelay = (i * 0.05) + 's';
+      layer.appendChild(star);
+    }
+  });
+}
+
+document.getElementById('blessClose').addEventListener('click', hideBlessOverlay);
+
+// ESC键可关闭
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') hideBlessOverlay();
+});
+
+candles.forEach(c => {
+  c.style.cursor = 'pointer';
+  c.addEventListener('click', (e) => {
+    e.stopPropagation();
+    blowCandle(c);
+  });
+});
+
+// 点击蛋糕空白处一键吹灭
+document.querySelector('.cake-svg').addEventListener('click', (e) => {
+  if (e.target.closest('.candle')) return;
+  candles.forEach(c => blowCandle(c));
+});
+
+// ============================================================
+// 模式切换（带深色背景 + 粒子生成）
+// ============================================================
+const tabHeart = document.getElementById('tabHeart');
+const tabCake  = document.getElementById('tabCake');
+const viewHeart = document.getElementById('viewHeart');
+const viewCake  = document.getElementById('viewCake');
+
+function switchMode(toCake) {
+  if (toCake) {
+    viewHeart.classList.add('hidden');
+    viewCake.classList.remove('hidden');
+    tabHeart.classList.remove('active');
+    tabCake.classList.add('active');
+    document.body.classList.add('cake-mode');
+    spawnCakeParticles();
+  } else {
+    viewCake.classList.add('hidden');
+    viewHeart.classList.remove('hidden');
+    tabCake.classList.remove('active');
+    tabHeart.classList.add('active');
+    document.body.classList.remove('cake-mode');
+  }
+}
+tabHeart.addEventListener('click', () => switchMode(false));
+tabCake.addEventListener('click', () => switchMode(true));
+</script>
+</body>
+</html>
